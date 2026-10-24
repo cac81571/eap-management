@@ -13,9 +13,7 @@ import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
-import javax.swing.JSpinner;
 import javax.swing.JTextField;
-import javax.swing.SpinnerNumberModel;
 
 import com.eap.management.config.DeployMode;
 import com.eap.management.config.EapSettings;
@@ -25,8 +23,8 @@ public class EapSettingsDialog extends JDialog {
     private final JTextField home = new JTextField();
     private final JTextField configFile = new JTextField();
     private final JTextField bindAddress = new JTextField();
-    private final JSpinner httpPort = new JSpinner(new SpinnerNumberModel(8080, 1, 65535, 1));
-    private final JSpinner managementPort = new JSpinner(new SpinnerNumberModel(9990, 1, 65535, 1));
+    private final JTextField httpPort = new JTextField();
+    private final JTextField managementPort = new JTextField();
     private final JTextField extraArgs = new JTextField();
     private final JComboBox<String> consoleEncoding = new JComboBox<>(
             ConsoleEncoding.choices().toArray(String[]::new));
@@ -41,8 +39,8 @@ public class EapSettingsDialog extends JDialog {
         home.setText(settings.getHome());
         configFile.setText(settings.getConfigFile());
         bindAddress.setText(settings.getBindAddress());
-        httpPort.setValue(settings.getHttpPort());
-        managementPort.setValue(settings.getManagementPort());
+        httpPort.setText(String.valueOf(settings.getHttpPort()));
+        managementPort.setText(String.valueOf(settings.getManagementPort()));
         extraArgs.setText(settings.getExtraArgs());
         consoleEncoding.setSelectedItem(ConsoleEncoding.normalize(settings.getConsoleEncoding()));
         directoryMode.setSelected(settings.getDeployMode() == DeployMode.DIRECTORY);
@@ -81,6 +79,10 @@ public class EapSettingsDialog extends JDialog {
         JButton ok = new JButton("保存");
         JButton cancel = new JButton("キャンセル");
         ok.addActionListener(e -> {
+            if (parsePort(httpPort.getText(), "HTTP ポート") < 0
+                    || parsePort(managementPort.getText(), "管理ポート") < 0) {
+                return;
+            }
             accepted = true;
             dispose();
         });
@@ -103,10 +105,24 @@ public class EapSettingsDialog extends JDialog {
         settings.setHome(home.getText().trim());
         settings.setConfigFile(configFile.getText().trim());
         settings.setBindAddress(bindAddress.getText().trim());
-        settings.setHttpPort((Integer) httpPort.getValue());
-        settings.setManagementPort((Integer) managementPort.getValue());
+        settings.setHttpPort(parsePort(httpPort.getText(), "HTTP ポート"));
+        settings.setManagementPort(parsePort(managementPort.getText(), "管理ポート"));
         settings.setExtraArgs(extraArgs.getText().trim());
         settings.setConsoleEncoding((String) consoleEncoding.getSelectedItem());
         settings.setDeployMode(cliMode.isSelected() ? DeployMode.CLI : DeployMode.DIRECTORY);
+    }
+
+    private int parsePort(String value, String label) {
+        try {
+            int port = Integer.parseInt(value.trim());
+            if (port < 1 || port > 65535) {
+                UiUtils.error(this, label + " は 1〜65535 で入力してください。");
+                return -1;
+            }
+            return port;
+        } catch (NumberFormatException e) {
+            UiUtils.error(this, label + " は数値で入力してください。");
+            return -1;
+        }
     }
 }

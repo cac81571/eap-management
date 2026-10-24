@@ -10,6 +10,7 @@ import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
@@ -38,6 +39,8 @@ public class ControlPanel extends JPanel {
 
         void onOpenConfig();
 
+        void onOpenStandaloneConf();
+
         void onOpenApp();
     }
 
@@ -56,6 +59,7 @@ public class ControlPanel extends JPanel {
     private final JButton openProjectButton = new JButton("プロジェクトを開く");
     private final JButton openDeploymentsButton = new JButton("deployments を開く");
     private final JButton openConfigButton = new JButton("設定ファイルを開く");
+    private final JButton openStandaloneConfButton = new JButton("standalone.conf.bat を開く");
     private final JButton openAppButton = new JButton("アプリを開く");
     private final EnvTablePanel globalEnv = new EnvTablePanel();
     private final EnvTablePanel projectEnv = new EnvTablePanel();
@@ -86,6 +90,7 @@ public class ControlPanel extends JPanel {
         openProjectButton.addActionListener(e -> fire(Listener::onOpenProject));
         openDeploymentsButton.addActionListener(e -> fire(Listener::onOpenDeployments));
         openConfigButton.addActionListener(e -> fire(Listener::onOpenConfig));
+        openStandaloneConfButton.addActionListener(e -> fire(Listener::onOpenStandaloneConf));
         openAppButton.addActionListener(e -> fire(Listener::onOpenApp));
     }
 
@@ -140,16 +145,13 @@ public class ControlPanel extends JPanel {
         openProjectButton.setEnabled(hasProject);
         openDeploymentsButton.setEnabled(eapConfigured);
         openConfigButton.setEnabled(eapConfigured);
+        openStandaloneConfButton.setEnabled(eapConfigured);
     }
 
     private JPanel eapCard() {
-        JPanel card = titledCard("EAP");
-        JPanel statusRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
-        statusRow.setAlignmentX(LEFT_ALIGNMENT);
-        statusDot.setFont(statusDot.getFont().deriveFont(Font.BOLD, 18f));
-        statusLabel.setFont(statusLabel.getFont().deriveFont(Font.BOLD, 16f));
-        statusRow.add(statusDot);
-        statusRow.add(statusLabel);
+        statusDot.setFont(statusDot.getFont().deriveFont(Font.BOLD, 16f));
+        statusLabel.setFont(statusLabel.getFont().deriveFont(Font.BOLD, 15f));
+        JPanel card = titledCard("EAP", statusDot, statusLabel);
 
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
         buttons.setAlignmentX(LEFT_ALIGNMENT);
@@ -158,11 +160,10 @@ public class ControlPanel extends JPanel {
         buttons.add(restartButton);
         buttons.add(openDeploymentsButton);
         buttons.add(openConfigButton);
+        buttons.add(openStandaloneConfButton);
         buttons.add(openAppButton);
 
         eapHint.setAlignmentX(LEFT_ALIGNMENT);
-        card.add(statusRow);
-        card.add(Box.createVerticalStrut(4));
         card.add(eapHint);
         card.add(Box.createVerticalStrut(8));
         card.add(buttons);
@@ -208,7 +209,7 @@ public class ControlPanel extends JPanel {
         return card;
     }
 
-    private static JPanel titledCard(String title) {
+    private static JPanel titledCard(String title, JComponent... trailing) {
         JPanel card = new JPanel();
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
         card.setAlignmentX(LEFT_ALIGNMENT);
@@ -216,8 +217,13 @@ public class ControlPanel extends JPanel {
         card.setBorder(UiUtils.cardBorder());
         JLabel label = new JLabel(title);
         label.setFont(label.getFont().deriveFont(Font.BOLD, 15f));
-        label.setAlignmentX(LEFT_ALIGNMENT);
-        card.add(label);
+        JPanel header = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+        header.setAlignmentX(LEFT_ALIGNMENT);
+        header.add(label);
+        for (JComponent component : trailing) {
+            header.add(component);
+        }
+        card.add(header);
         card.add(Box.createVerticalStrut(8));
         return card;
     }

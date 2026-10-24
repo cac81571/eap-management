@@ -18,6 +18,16 @@ class EapSettingsTest {
     }
 
     @Test
+    void standaloneConfPathUsesBinDirectory() {
+        EapSettings settings = new EapSettings();
+        settings.setHome("C:/jboss/jboss-eap-8.1");
+        String expected = com.eap.management.process.Os.isWindows()
+                ? "C:/jboss/jboss-eap-8.1/bin/standalone.conf.bat"
+                : "C:/jboss/jboss-eap-8.1/bin/standalone.conf";
+        assertEquals(Path.of(expected), settings.standaloneConfPath());
+    }
+
+    @Test
     void configFilePathKeepsAbsolutePath() {
         EapSettings settings = new EapSettings();
         settings.setHome("C:/jboss/jboss-eap-8.1");

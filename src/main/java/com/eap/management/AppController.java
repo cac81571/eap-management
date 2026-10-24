@@ -143,6 +143,11 @@ public class AppController {
             }
 
             @Override
+            public void onOpenStandaloneConf() {
+                openStandaloneConf();
+            }
+
+            @Override
             public void onOpenApp() {
                 openApp();
             }
@@ -254,6 +259,16 @@ public class AppController {
             Os.openFile(file);
         } catch (IOException e) {
             UiUtils.error(frame, "設定ファイルを開けませんでした。", e);
+        }
+    }
+
+    private void openStandaloneConf() {
+        Path file = config.getEap().standaloneConfPath();
+        frame.log().append("APP", "standalone.conf を開きます: " + file);
+        try {
+            Os.openFile(file);
+        } catch (IOException e) {
+            UiUtils.error(frame, "standalone.conf を開けませんでした。", e);
         }
     }
 

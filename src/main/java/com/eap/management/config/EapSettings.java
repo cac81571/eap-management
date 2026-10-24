@@ -50,6 +50,14 @@ public class EapSettings {
         return homePath == null ? null : homePath.resolve("standalone").resolve("configuration");
     }
 
+    public Path standaloneConfPath() {
+        Path bin = binDir();
+        if (bin == null) {
+            return Path.of(Os.isWindows() ? "standalone.conf.bat" : "standalone.conf");
+        }
+        return bin.resolve(Os.isWindows() ? "standalone.conf.bat" : "standalone.conf");
+    }
+
     public Path configFilePath() {
         String name = getConfigFile();
         Path specified = Path.of(name);

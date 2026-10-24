@@ -72,7 +72,11 @@ public final class Os {
         }
         String absolute = path.toAbsolutePath().toString();
         List<IOException> errors = new ArrayList<>();
-        if (isWindows()) {
+        if (isWindows() && opensAsExecutable(path)) {
+            if (start(List.of("notepad.exe", absolute), errors)) {
+                return;
+            }
+        } else if (isWindows()) {
             if (start(List.of("cmd.exe", "/c", "start", "", absolute), errors)) {
                 return;
             }
@@ -134,6 +138,16 @@ public final class Os {
         IOException failed = new IOException("ブラウザを開けませんでした: " + url);
         errors.forEach(failed::addSuppressed);
         throw failed;
+    }
+
+    static boolean opensAsExecutable(Path path) {
+        String name = path.getFileName().toString().toLowerCase(Locale.ROOT);
+        return name.endsWith(".bat")
+                || name.endsWith(".cmd")
+                || name.endsWith(".ps1")
+                || name.endsWith(".exe")
+                || name.endsWith(".com")
+                || name.endsWith(".vbs");
     }
 
     private static boolean start(List<String> command, List<IOException> errors) {
