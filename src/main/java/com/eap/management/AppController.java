@@ -20,6 +20,7 @@ import com.eap.management.process.EapService;
 import com.eap.management.process.EapStatus;
 import com.eap.management.process.LaunchJsonWriter;
 import com.eap.management.process.Os;
+import com.eap.management.process.TasksJsonWriter;
 import com.eap.management.process.ProcessService;
 import com.eap.management.ui.EapSettingsDialog;
 import com.eap.management.ui.MainFrame;
@@ -151,6 +152,11 @@ public class AppController {
             }
 
             @Override
+            public void onExportTasksJson() {
+                exportTasksJson();
+            }
+
+            @Override
             public void onOpenDeployments() {
                 openDeployments();
             }
@@ -262,6 +268,22 @@ public class AppController {
             Os.openFolder(file.getParent());
         } catch (IOException e) {
             UiUtils.error(frame, "launch.json を出力できませんでした。", e);
+        }
+    }
+
+    private void exportTasksJson() {
+        WarProject project = requireProject();
+        if (project == null) {
+            return;
+        }
+        try {
+            Path file = TasksJsonWriter.write(project.projectPath(), config, project);
+            frame.log().append("APP", "tasks.json を出力しました: " + file.toAbsolutePath());
+            frame.log().append("APP", "パスは settings.json の eap.home / eap.warFile などを ${config:eap.home} で参照します");
+            frame.log().append("APP", "VS Code の「タスクの実行」から 起動 / 停止 / ビルド / デプロイ を実行できます");
+            Os.openFolder(file.getParent());
+        } catch (Exception e) {
+            UiUtils.error(frame, "tasks.json を出力できませんでした。", e);
         }
     }
 

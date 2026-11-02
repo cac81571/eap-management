@@ -5,7 +5,7 @@ JBoss / WildFly EAP の起動・停止、複数 WAR プロジェクトのビル�
 ## できること
 
 - EAP の起動 / デバッグ起動 / 停止（`standalone --debug` と `jboss-cli`）
-- 選択プロジェクトへ VS Code 用 `launch.json`（Attach to EAP）を出力
+- 選択プロジェクトへ VS Code 用 `launch.json`（Attach to EAP）と `tasks.json`（GUI と同じ起動 / 停止 / ビルド / デプロイ。パスは `settings.json` の `eap.*` を `${config:eap.home}` で参照）を出力
 - 複数 WAR プロジェクトの登録・編集・削除
 - 選択した WAR のビルド（既定は `mvn -DskipTests package`）
 - 選択した WAR のデプロイ / ビルド＋デプロイ（「デプロイ済みの WAR を削除する」がオンなら既存 WAR をアンデプロイしてから配置）
@@ -51,6 +51,7 @@ mvn -q exec:java
 3. 左リストで「デプロイする WAR」を選びます。
 4. **起動** で EAP を起動し、**ビルド** / **デプロイ** / **ビルド＋デプロイ** で成果物を配置します。
    既定で **デプロイ済みの WAR を削除する** がオンです。オフにすると既存のデプロイを残したまま追加配置します。
+5. **tasks.json を出力** で VS Code 用タスクを書き出します。タスクの実行から **起動 / デバッグ起動 / 停止 / 再起動 / ビルド / デプロイ / ビルド＋デプロイ** を GUI と同じ手順で実行できます。デプロイ方式がディレクトリコピーなら `deployments` へコピーし、jboss-cli なら CLI デプロイします。EAP ホーム、WAR ファイル、ポートは `.vscode/settings.json` の `eap.*` に出し、`tasks.json` からは `${config:eap.home}` / `${config:eap.warFile}` のように参照します。
 
 環境変数は画面右側で編集します。
 
