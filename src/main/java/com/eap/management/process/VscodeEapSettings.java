@@ -16,6 +16,9 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 final class VscodeEapSettings {
     static final String KEY_HOME = "eap.home";
+    static final String KEY_JAVA_TOOL_OPTIONS = "eap.javaToolOptions";
+    static final String KEY_JAVA_SIZING = "eap.javaSizing";
+    static final String KEY_CLI_JAVA_OPTS = "eap.cliJavaOpts";
     static final String KEY_STANDALONE_SCRIPT = "eap.standaloneScript";
     static final String KEY_CLI_SCRIPT = "eap.cliScript";
     static final String KEY_CONFIG_FILE = "eap.configFile";
@@ -27,7 +30,14 @@ final class VscodeEapSettings {
     static final String KEY_WAR_FILE = "eap.warFile";
     static final String KEY_DEPLOY_NAME = "eap.deployName";
 
+    static final String DEFAULT_JAVA_TOOL_OPTIONS = "-Dstdout.encoding=UTF-8 -Dstderr.encoding=UTF-8";
+    static final String DEFAULT_JAVA_SIZING = "-Xms256m -Xmx512m";
+    static final String DEFAULT_CLI_JAVA_OPTS = "-Xms32m -Xmx128m";
+
     static final String HOME = config(KEY_HOME);
+    static final String JAVA_TOOL_OPTIONS = config(KEY_JAVA_TOOL_OPTIONS);
+    static final String JAVA_SIZING = config(KEY_JAVA_SIZING);
+    static final String CLI_JAVA_OPTS = config(KEY_CLI_JAVA_OPTS);
     static final String STANDALONE_SCRIPT = config(KEY_STANDALONE_SCRIPT);
     static final String CLI_SCRIPT = config(KEY_CLI_SCRIPT);
     static final String CONFIG_FILE = config(KEY_CONFIG_FILE);
@@ -38,8 +48,10 @@ final class VscodeEapSettings {
     static final String DEBUG_PORT = config(KEY_DEBUG_PORT);
     static final String WAR_FILE = config(KEY_WAR_FILE);
     static final String DEPLOY_NAME = config(KEY_DEPLOY_NAME);
-    static final String DEPLOYMENTS_DIR = HOME + "/standalone/deployments";
-    static final String DEPLOYED_WAR = DEPLOYMENTS_DIR + "/" + DEPLOY_NAME;
+    static final String WORKSPACE_WAR = "${workspaceFolder}/" + WAR_FILE;
+    static final String DEPLOYED_WAR = Os.isWindows()
+            ? HOME + "\\standalone\\deployments\\" + DEPLOY_NAME
+            : HOME + "/standalone/deployments/" + DEPLOY_NAME;
 
     private static final ObjectMapper MAPPER = mapper();
 
@@ -51,7 +63,10 @@ final class VscodeEapSettings {
         Files.createDirectories(vscode);
         Path file = vscode.resolve("settings.json");
         ObjectNode root = readOrCreate(file);
-        root.put(KEY_HOME, JbossCliCommands.slash(eap.homePath()));
+        root.put(KEY_HOME, nativePath(eap.homePath()));
+        putIfAbsent(root, KEY_JAVA_TOOL_OPTIONS, DEFAULT_JAVA_TOOL_OPTIONS);
+        putIfAbsent(root, KEY_JAVA_SIZING, DEFAULT_JAVA_SIZING);
+        putIfAbsent(root, KEY_CLI_JAVA_OPTS, DEFAULT_CLI_JAVA_OPTS);
         root.put(KEY_STANDALONE_SCRIPT, relativeBin(eap.standaloneScript()));
         root.put(KEY_CLI_SCRIPT, relativeBin(eap.cliScript()));
         root.put(KEY_CONFIG_FILE, eap.getConfigFile());
@@ -60,15 +75,26 @@ final class VscodeEapSettings {
         root.put(KEY_HTTP_PORT, eap.getHttpPort());
         root.put(KEY_MANAGEMENT_PORT, eap.getManagementPort());
         root.put(KEY_DEBUG_PORT, eap.getDebugPort());
-        root.put(KEY_WAR_FILE, JbossCliCommands.workspaceWarPath(project));
+        root.put(KEY_WAR_FILE, JbossCliCommands.workspaceWarRelative(project));
         root.put(KEY_DEPLOY_NAME, JbossCliCommands.runtimeName(project));
         MAPPER.writerWithDefaultPrettyPrinter().writeValue(file.toFile(), root);
         return file;
     }
 
+    private static void putIfAbsent(ObjectNode root, String key, String value) {
+        if (!root.hasNonNull(key) || root.path(key).asText().isBlank()) {
+            root.put(key, value);
+        }
+    }
+
     private static String relativeBin(Path script) {
         String fileName = script.getFileName() == null ? "standalone.bat" : script.getFileName().toString();
-        return "bin/" + fileName;
+        return Os.isWindows() ? "bin\\" + fileName : "bin/" + fileName;
+    }
+
+    private static String nativePath(Path path) {
+        String value = path.toAbsolutePath().normalize().toString();
+        return Os.isWindows() ? value.replace('/', '\\') : value.replace('\\', '/');
     }
 
     private static String config(String key) {

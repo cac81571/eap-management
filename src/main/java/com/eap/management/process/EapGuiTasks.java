@@ -2,6 +2,7 @@ package com.eap.management.process;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import com.eap.management.config.AppConfig;
 import com.eap.management.config.DeployMode;
@@ -9,6 +10,15 @@ import com.eap.management.config.EapSettings;
 import com.eap.management.config.WarProject;
 
 final class EapGuiTasks {
+    private static final Map<String, String> STANDALONE_ENV = Map.of(
+            "JAVA_TOOL_OPTIONS", VscodeEapSettings.JAVA_TOOL_OPTIONS,
+            "JBOSS_JAVA_SIZING", VscodeEapSettings.JAVA_SIZING
+    );
+    private static final Map<String, String> CLI_ENV = Map.of(
+            "JAVA_TOOL_OPTIONS", VscodeEapSettings.JAVA_TOOL_OPTIONS,
+            "JAVA_OPTS", VscodeEapSettings.CLI_JAVA_OPTS
+    );
+
     private EapGuiTasks() {
     }
 
@@ -22,6 +32,7 @@ final class EapGuiTasks {
                 EapGuiTask.STOP.label(), EapGuiTask.START.label())));
         specs.add(build(project));
         specs.add(deploy(eap, project));
+        specs.add(undeploy(eap, project));
         specs.add(TaskSpec.compound(EapGuiTask.BUILD_AND_DEPLOY.label(), List.of(
                 EapGuiTask.BUILD.label(), EapGuiTask.DEPLOY.label())));
         return specs;
@@ -33,7 +44,8 @@ final class EapGuiTasks {
                 VscodeEapSettings.STANDALONE_SCRIPT,
                 startArgs(eap, debug),
                 VscodeEapSettings.HOME,
-                true
+                true,
+                STANDALONE_ENV
         );
     }
 
@@ -43,7 +55,8 @@ final class EapGuiTasks {
                 VscodeEapSettings.CLI_SCRIPT,
                 cliArgs(cliTask, project),
                 VscodeEapSettings.HOME,
-                false
+                false,
+                CLI_ENV
         );
     }
 
@@ -71,6 +84,28 @@ final class EapGuiTasks {
                 EapGuiTask.DEPLOY.label(),
                 "cp",
                 List.of(VscodeEapSettings.WAR_FILE, VscodeEapSettings.DEPLOYED_WAR),
+                "${workspaceFolder}",
+                false
+        );
+    }
+
+    private static TaskSpec undeploy(EapSettings eap, WarProject project) {
+        if (eap.getDeployMode() == DeployMode.CLI) {
+            return cli(EapGuiTask.UNDEPLOY, JbossCliTask.UNDEPLOY, project);
+        }
+        if (Os.isWindows()) {
+            return TaskSpec.command(
+                    EapGuiTask.UNDEPLOY.label(),
+                    "del",
+                    List.of("/Q", VscodeEapSettings.DEPLOYED_WAR + "*"),
+                    "${workspaceFolder}",
+                    false
+            );
+        }
+        return TaskSpec.command(
+                EapGuiTask.UNDEPLOY.label(),
+                "rm",
+                List.of("-f", VscodeEapSettings.DEPLOYED_WAR + "*"),
                 "${workspaceFolder}",
                 false
         );
@@ -104,8 +139,11 @@ final class EapGuiTasks {
 
     private static String cliCommand(JbossCliTask cliTask, WarProject project) {
         if (cliTask == JbossCliTask.DEPLOY) {
-            return "deploy \"" + VscodeEapSettings.WAR_FILE + "\" --name="
+            return "deploy \"" + VscodeEapSettings.WORKSPACE_WAR + "\" --name="
                     + VscodeEapSettings.DEPLOY_NAME + " --force";
+        }
+        if (cliTask == JbossCliTask.UNDEPLOY) {
+            return "undeploy " + VscodeEapSettings.DEPLOY_NAME;
         }
         return JbossCliCommands.cliCommand(cliTask, project);
     }

@@ -9,6 +9,7 @@ public enum EapGuiTask {
     RESTART("再起動"),
     BUILD("ビルド"),
     DEPLOY("デプロイ"),
+    UNDEPLOY("アンデプロイ"),
     BUILD_AND_DEPLOY("ビルド＋デプロイ");
 
     public static final Set<String> LEGACY_LABELS = Set.of(

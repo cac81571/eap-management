@@ -33,6 +33,8 @@ class JbossCliCommandsTest {
         assertEquals("deploy \"${workspaceFolder}/target/shop.war\" --name=shop.war --force",
                 JbossCliCommands.cliCommand(JbossCliTask.DEPLOY, project));
         assertEquals("undeploy shop.war", JbossCliCommands.cliCommand(JbossCliTask.UNDEPLOY, project));
+        String relative = JbossCliCommands.workspaceWarRelative(project);
+        assertEquals(Os.isWindows() ? "target\\shop.war" : "target/shop.war", relative);
     }
 
     @Test

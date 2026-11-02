@@ -81,12 +81,18 @@ public final class TasksJsonWriter {
         node.set("args", args);
         ObjectNode options = MAPPER.createObjectNode();
         options.put("cwd", spec.cwd());
+        if (!spec.env().isEmpty()) {
+            ObjectNode env = MAPPER.createObjectNode();
+            spec.env().forEach(env::put);
+            options.set("env", env);
+        }
         if (Os.isWindows()) {
             ObjectNode shell = MAPPER.createObjectNode();
             shell.put("executable", "cmd.exe");
             ArrayNode shellArgs = MAPPER.createArrayNode();
             shellArgs.add("/d");
             shellArgs.add("/c");
+            shellArgs.add("chcp 65001 >nul &&");
             shell.set("args", shellArgs);
             options.set("shell", shell);
         }

@@ -280,7 +280,7 @@ public class AppController {
             Path file = TasksJsonWriter.write(project.projectPath(), config, project);
             frame.log().append("APP", "tasks.json を出力しました: " + file.toAbsolutePath());
             frame.log().append("APP", "パスは settings.json の eap.home / eap.warFile などを ${config:eap.home} で参照します");
-            frame.log().append("APP", "VS Code の「タスクの実行」から 起動 / 停止 / ビルド / デプロイ を実行できます");
+            frame.log().append("APP", "VS Code の「タスクの実行」から 起動 / 停止 / ビルド / デプロイ / アンデプロイ を実行できます");
             Os.openFolder(file.getParent());
         } catch (Exception e) {
             UiUtils.error(frame, "tasks.json を出力できませんでした。", e);

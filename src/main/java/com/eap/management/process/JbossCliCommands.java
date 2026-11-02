@@ -64,6 +64,15 @@ public final class JbossCliCommands {
         return "${workspaceFolder}/" + dir + "/" + runtimeName(project);
     }
 
+    static String workspaceWarRelative(WarProject project) {
+        String path = workspaceWarPath(project);
+        String prefix = "${workspaceFolder}/";
+        if (path.startsWith(prefix)) {
+            path = path.substring(prefix.length());
+        }
+        return Os.isWindows() ? path.replace('/', '\\') : path.replace('\\', '/');
+    }
+
     static String runtimeName(WarProject project) {
         if (project != null && project.getDeployName() != null && !project.getDeployName().isBlank()) {
             String value = project.getDeployName().trim();
