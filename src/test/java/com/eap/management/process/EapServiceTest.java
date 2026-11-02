@@ -1,10 +1,13 @@
 package com.eap.management.process;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
+
+import com.eap.management.config.EapSettings;
 
 class EapServiceTest {
     @Test
@@ -15,6 +18,16 @@ class EapServiceTest {
         assertEquals(EapStatus.STARTING, EapService.nextStatus(EapStatus.STARTING, false, true, false));
         assertEquals(EapStatus.STARTING, EapService.nextStatus(EapStatus.STARTING, false, false, true));
         assertEquals(EapStatus.RUNNING, EapService.nextStatus(EapStatus.STARTING, true, true, true));
+    }
+
+    @Test
+    void startArgsAddsDebugPort() {
+        EapSettings settings = new EapSettings();
+        settings.setDebugPort(8787);
+        List<String> args = EapService.startArgs(settings, true);
+        assertEquals("--debug", args.get(0));
+        assertEquals("8787", args.get(1));
+        assertTrue(args.contains("-c"));
     }
 
     @Test

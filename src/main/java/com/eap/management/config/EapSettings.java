@@ -11,6 +11,7 @@ public class EapSettings {
     private String bindAddress = "0.0.0.0";
     private int httpPort = 8080;
     private int managementPort = 9990;
+    private int debugPort = 8787;
     private String extraArgs = "";
     private String consoleEncoding = "AUTO";
     private DeployMode deployMode = DeployMode.DIRECTORY;
@@ -132,6 +133,14 @@ public class EapSettings {
 
     public void setManagementPort(int managementPort) {
         this.managementPort = managementPort;
+    }
+
+    public int getDebugPort() {
+        return debugPort <= 0 ? 8787 : debugPort;
+    }
+
+    public void setDebugPort(int debugPort) {
+        this.debugPort = debugPort <= 0 ? 8787 : debugPort;
     }
 
     public String getExtraArgs() {

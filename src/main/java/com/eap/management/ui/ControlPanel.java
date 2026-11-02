@@ -23,6 +23,8 @@ public class ControlPanel extends JPanel {
     public interface Listener {
         void onStart();
 
+        void onStartDebug();
+
         void onStop();
 
         void onRestart();
@@ -51,6 +53,7 @@ public class ControlPanel extends JPanel {
     private final JLabel lastDeployedLabel = new JLabel("前回デプロイ: なし");
     private final JLabel appUrlLabel = new JLabel("アプリ URL: なし");
     private final JButton startButton = new JButton("起動");
+    private final JButton startDebugButton = new JButton("デバッグ起動");
     private final JButton stopButton = new JButton("停止");
     private final JButton restartButton = new JButton("再起動");
     private final JButton buildButton = new JButton("ビルド");
@@ -81,6 +84,7 @@ public class ControlPanel extends JPanel {
         add(stack, BorderLayout.NORTH);
 
         startButton.addActionListener(e -> fire(Listener::onStart));
+        startDebugButton.addActionListener(e -> fire(Listener::onStartDebug));
         stopButton.addActionListener(e -> fire(Listener::onStop));
         restartButton.addActionListener(e -> fire(Listener::onRestart));
         buildButton.addActionListener(e -> fire(Listener::onBuild));
@@ -106,8 +110,8 @@ public class ControlPanel extends JPanel {
         return projectEnv;
     }
 
-    public void setStatus(EapStatus status, String hint) {
-        statusLabel.setText(status.label());
+    public void setStatus(EapStatus status, String hint, boolean debug) {
+        statusLabel.setText(status == EapStatus.RUNNING && debug ? "稼働中 (デバッグ)" : status.label());
         eapHint.setText(hint == null ? "" : hint);
         Color color = switch (status) {
             case RUNNING -> new Color(46, 160, 67);
@@ -137,6 +141,7 @@ public class ControlPanel extends JPanel {
     public void setBusy(EapStatus status, boolean jobBusy, boolean hasProject, boolean eapConfigured) {
         boolean eapBusy = status.transitioning();
         startButton.setEnabled(!eapBusy && !jobBusy && eapConfigured);
+        startDebugButton.setEnabled(!eapBusy && !jobBusy && eapConfigured);
         stopButton.setEnabled(!jobBusy && eapConfigured && status == EapStatus.RUNNING);
         restartButton.setEnabled(!eapBusy && !jobBusy && eapConfigured);
         buildButton.setEnabled(!jobBusy && hasProject);
@@ -156,6 +161,7 @@ public class ControlPanel extends JPanel {
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
         buttons.setAlignmentX(LEFT_ALIGNMENT);
         buttons.add(startButton);
+        buttons.add(startDebugButton);
         buttons.add(stopButton);
         buttons.add(restartButton);
         buttons.add(openDeploymentsButton);

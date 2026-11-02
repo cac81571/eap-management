@@ -22,6 +22,7 @@ public class EapService {
     private final AtomicReference<Process> process = new AtomicReference<>();
     private final AtomicReference<EapStatus> status = new AtomicReference<>(EapStatus.STOPPED);
     private final AtomicBoolean startRequested = new AtomicBoolean();
+    private final AtomicBoolean debugMode = new AtomicBoolean();
 
     public EapService(ProcessService processes) {
         this.processes = processes;
@@ -39,8 +40,11 @@ public class EapService {
         if (next == EapStatus.RUNNING || next == EapStatus.STOPPED || next == EapStatus.STOPPING) {
             startRequested.set(false);
         }
-        if (next == EapStatus.STOPPED && running != null && !processAlive) {
-            process.compareAndSet(running, null);
+        if (next == EapStatus.STOPPED) {
+            debugMode.set(false);
+            if (running != null && !processAlive) {
+                process.compareAndSet(running, null);
+            }
         }
         return next;
     }
@@ -66,6 +70,10 @@ public class EapService {
         }
     }
 
+    public boolean isDebugMode() {
+        return debugMode.get();
+    }
+
     public void markStopping() {
         startRequested.set(false);
         status.set(EapStatus.STOPPING);
@@ -77,6 +85,10 @@ public class EapService {
     }
 
     public void start(EapSettings settings, Map<String, String> env, LogListener log) throws IOException {
+        start(settings, env, log, false);
+    }
+
+    public void start(EapSettings settings, Map<String, String> env, LogListener log, boolean debug) throws IOException {
         markStarting();
         if (isManagementReachable(settings)) {
             startRequested.set(false);
@@ -84,6 +96,7 @@ public class EapService {
             log.append("EAP", "すでに起動しています");
             return;
         }
+        debugMode.set(debug);
         Process leftover = process.get();
         if (leftover != null && leftover.isAlive()) {
             leftover.destroyForcibly();
@@ -92,20 +105,14 @@ public class EapService {
         Path script = settings.standaloneScript();
         if (script == null || !Files.isRegularFile(script)) {
             startRequested.set(false);
+            debugMode.set(false);
             status.set(EapStatus.STOPPED);
             throw new IOException("EAP の standalone スクリプトが見つかりません。EAP ホームを確認してください。");
         }
-        List<String> args = new ArrayList<>();
-        args.add("-c");
-        args.add(settings.getConfigFile());
-        args.add("-b");
-        args.add(settings.getBindAddress());
-        args.add("-bmanagement");
-        args.add(settings.managementHost());
-        args.add("-Djboss.http.port=" + settings.getHttpPort());
-        args.add("-Djboss.management.http.port=" + settings.getManagementPort());
-        args.addAll(tokenize(settings.getExtraArgs()));
-
+        List<String> args = startArgs(settings, debug);
+        if (debug) {
+            log.append("EAP", "デバッグ起動します (JDWP localhost:" + settings.getDebugPort() + ")");
+        }
         log.append("EAP", "起動します: " + script + " " + String.join(" ", args));
         try {
             Process started = processes.start(Os.script(script, args), settings.homePath(), env, "EAP", (source, line) -> {
@@ -122,9 +129,28 @@ public class EapService {
             process.set(started);
         } catch (IOException e) {
             startRequested.set(false);
+            debugMode.set(false);
             status.set(EapStatus.STOPPED);
             throw e;
         }
+    }
+
+    static List<String> startArgs(EapSettings settings, boolean debug) {
+        List<String> args = new ArrayList<>();
+        if (debug) {
+            args.add("--debug");
+            args.add(String.valueOf(settings.getDebugPort()));
+        }
+        args.add("-c");
+        args.add(settings.getConfigFile());
+        args.add("-b");
+        args.add(settings.getBindAddress());
+        args.add("-bmanagement");
+        args.add(settings.managementHost());
+        args.add("-Djboss.http.port=" + settings.getHttpPort());
+        args.add("-Djboss.management.http.port=" + settings.getManagementPort());
+        args.addAll(tokenize(settings.getExtraArgs()));
+        return args;
     }
 
     public void stop(EapSettings settings, Map<String, String> env, LogListener log)
@@ -181,6 +207,7 @@ public class EapService {
     public void restart(EapSettings settings, Map<String, String> env, LogListener log)
             throws IOException, InterruptedException {
         status.set(EapStatus.RESTARTING);
+        boolean debug = debugMode.get();
         try {
             boolean wasUp = isManagementReachable(settings)
                     || (process.get() != null && process.get().isAlive());
@@ -193,7 +220,7 @@ public class EapService {
                 log.append("EAP", "停止しているため再起動ではなく起動します");
             }
             status.set(EapStatus.RESTARTING);
-            start(settings, env, log);
+            start(settings, env, log, debug);
         } catch (IOException | InterruptedException e) {
             if (status.get() == EapStatus.RESTARTING) {
                 status.set(isManagementReachable(settings) ? EapStatus.RUNNING : EapStatus.STOPPED);

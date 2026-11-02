@@ -25,6 +25,7 @@ public class EapSettingsDialog extends JDialog {
     private final JTextField bindAddress = new JTextField();
     private final JTextField httpPort = new JTextField();
     private final JTextField managementPort = new JTextField();
+    private final JTextField debugPort = new JTextField();
     private final JTextField extraArgs = new JTextField();
     private final JComboBox<String> consoleEncoding = new JComboBox<>(
             ConsoleEncoding.choices().toArray(String[]::new));
@@ -41,6 +42,7 @@ public class EapSettingsDialog extends JDialog {
         bindAddress.setText(settings.getBindAddress());
         httpPort.setText(String.valueOf(settings.getHttpPort()));
         managementPort.setText(String.valueOf(settings.getManagementPort()));
+        debugPort.setText(String.valueOf(settings.getDebugPort()));
         extraArgs.setText(settings.getExtraArgs());
         consoleEncoding.setSelectedItem(ConsoleEncoding.normalize(settings.getConsoleEncoding()));
         directoryMode.setSelected(settings.getDeployMode() == DeployMode.DIRECTORY);
@@ -69,10 +71,11 @@ public class EapSettingsDialog extends JDialog {
         UiUtils.addFormRow(form, gbc, 2, "バインドアドレス", bindAddress);
         UiUtils.addFormRow(form, gbc, 3, "HTTP ポート", httpPort);
         UiUtils.addFormRow(form, gbc, 4, "管理ポート", managementPort);
-        UiUtils.addFormRow(form, gbc, 5, "追加引数", extraArgs);
-        UiUtils.addFormRow(form, gbc, 6, "ログ文字コード", consoleEncoding);
-        UiUtils.addFormRow(form, gbc, 7, "デプロイ方式", directoryMode);
-        gbc.gridy = 8;
+        UiUtils.addFormRow(form, gbc, 5, "デバッグポート", debugPort);
+        UiUtils.addFormRow(form, gbc, 6, "追加引数", extraArgs);
+        UiUtils.addFormRow(form, gbc, 7, "ログ文字コード", consoleEncoding);
+        UiUtils.addFormRow(form, gbc, 8, "デプロイ方式", directoryMode);
+        gbc.gridy = 9;
         gbc.gridx = 1;
         form.add(cliMode, gbc);
 
@@ -80,7 +83,8 @@ public class EapSettingsDialog extends JDialog {
         JButton cancel = new JButton("キャンセル");
         ok.addActionListener(e -> {
             if (parsePort(httpPort.getText(), "HTTP ポート") < 0
-                    || parsePort(managementPort.getText(), "管理ポート") < 0) {
+                    || parsePort(managementPort.getText(), "管理ポート") < 0
+                    || parsePort(debugPort.getText(), "デバッグポート") < 0) {
                 return;
             }
             accepted = true;
@@ -93,7 +97,7 @@ public class EapSettingsDialog extends JDialog {
 
         add(form, BorderLayout.CENTER);
         add(buttons, BorderLayout.SOUTH);
-        setSize(640, 470);
+        setSize(640, 510);
         setLocationRelativeTo(owner);
     }
 
@@ -107,6 +111,7 @@ public class EapSettingsDialog extends JDialog {
         settings.setBindAddress(bindAddress.getText().trim());
         settings.setHttpPort(parsePort(httpPort.getText(), "HTTP ポート"));
         settings.setManagementPort(parsePort(managementPort.getText(), "管理ポート"));
+        settings.setDebugPort(parsePort(debugPort.getText(), "デバッグポート"));
         settings.setExtraArgs(extraArgs.getText().trim());
         settings.setConsoleEncoding((String) consoleEncoding.getSelectedItem());
         settings.setDeployMode(cliMode.isSelected() ? DeployMode.CLI : DeployMode.DIRECTORY);

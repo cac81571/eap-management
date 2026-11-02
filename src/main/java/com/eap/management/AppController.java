@@ -83,7 +83,13 @@ public class AppController {
             @Override
             public void onStart() {
                 eapService.markStarting();
-                runJob("EAP 起動", () -> eapService.start(config.getEap(), envForSelected(), frame.log()));
+                runJob("EAP 起動", () -> eapService.start(config.getEap(), envForSelected(), frame.log(), false));
+            }
+
+            @Override
+            public void onStartDebug() {
+                eapService.markStarting();
+                runJob("EAP デバッグ起動", () -> eapService.start(config.getEap(), envForSelected(), frame.log(), true));
             }
 
             @Override
@@ -361,10 +367,13 @@ public class AppController {
         } else if (status == EapStatus.RUNNING) {
             hint = "管理 " + config.getEap().managementHost() + ":" + config.getEap().getManagementPort()
                     + " / HTTP " + config.getEap().httpBaseUrl();
+            if (eapService.isDebugMode()) {
+                hint += " / デバッグ localhost:" + config.getEap().getDebugPort();
+            }
         } else {
             hint = config.getEap().getHome();
         }
-        frame.controls().setStatus(status, hint);
+        frame.controls().setStatus(status, hint, eapService.isDebugMode());
         frame.controls().setBusy(status, jobBusy, config.selectedProject().isPresent(), configured);
         String lastName = config.findProject(config.getLastDeployedProjectId())
                 .map(WarProject::getName)
