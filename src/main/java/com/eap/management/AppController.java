@@ -18,6 +18,7 @@ import com.eap.management.process.BuildService;
 import com.eap.management.process.DeployService;
 import com.eap.management.process.EapService;
 import com.eap.management.process.EapStatus;
+import com.eap.management.process.LaunchJsonWriter;
 import com.eap.management.process.Os;
 import com.eap.management.process.ProcessService;
 import com.eap.management.ui.EapSettingsDialog;
@@ -145,6 +146,11 @@ public class AppController {
             }
 
             @Override
+            public void onExportLaunchJson() {
+                exportLaunchJson();
+            }
+
+            @Override
             public void onOpenDeployments() {
                 openDeployments();
             }
@@ -239,6 +245,24 @@ public class AppController {
         persistQuietly();
         reloadLists();
         refresh();
+    }
+
+    private void exportLaunchJson() {
+        WarProject project = requireProject();
+        if (project == null) {
+            return;
+        }
+        try {
+            Path dir = project.projectPath();
+            String module = dir == null || dir.getFileName() == null ? project.getName() : dir.getFileName().toString();
+            int port = config.getEap().getDebugPort();
+            Path file = LaunchJsonWriter.write(dir, module, "localhost", port);
+            frame.log().append("APP", "launch.json を出力しました: " + file.toAbsolutePath());
+            frame.log().append("APP", "デバッグ起動したあと、VS Code で「Attach to EAP」(localhost:" + port + ") を実行してください");
+            Os.openFolder(file.getParent());
+        } catch (IOException e) {
+            UiUtils.error(frame, "launch.json を出力できませんでした。", e);
+        }
     }
 
     private void openSelectedProject() {

@@ -5,6 +5,7 @@ JBoss / WildFly EAP の起動・停止、複数 WAR プロジェクトのビル�
 ## できること
 
 - EAP の起動 / デバッグ起動 / 停止（`standalone --debug` と `jboss-cli`）
+- 選択プロジェクトへ VS Code 用 `launch.json`（Attach to EAP）を出力
 - 複数 WAR プロジェクトの登録・編集・削除
 - 選択した WAR のビルド（既定は `mvn -DskipTests package`）
 - 選択した WAR のデプロイ / ビルド＋デプロイ（「デプロイ済みの WAR を削除する」がオンなら既存 WAR をアンデプロイしてから配置）

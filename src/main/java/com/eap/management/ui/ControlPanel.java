@@ -40,6 +40,8 @@ public class ControlPanel extends JPanel {
 
         void onOpenProject();
 
+        void onExportLaunchJson();
+
         void onOpenDeployments();
 
         void onOpenConfig();
@@ -63,6 +65,7 @@ public class ControlPanel extends JPanel {
     private final JButton deployButton = new JButton("デプロイ");
     private final JButton buildDeployButton = new JButton("ビルド＋デプロイ");
     private final JButton openProjectButton = new JButton("プロジェクトを開く");
+    private final JButton exportLaunchJsonButton = new JButton("launch.json を出力");
     private final JCheckBox removeDeployedWars = new JCheckBox("デプロイ済みの WAR を削除する", true);
     private final JButton openDeploymentsButton = new JButton("deployments を開く");
     private final JButton openConfigButton = new JButton("設定ファイルを開く");
@@ -96,6 +99,7 @@ public class ControlPanel extends JPanel {
         buildDeployButton.putClientProperty("JButton.buttonType", "roundRect");
         buildDeployButton.addActionListener(e -> fire(Listener::onBuildAndDeploy));
         openProjectButton.addActionListener(e -> fire(Listener::onOpenProject));
+        exportLaunchJsonButton.addActionListener(e -> fire(Listener::onExportLaunchJson));
         openDeploymentsButton.addActionListener(e -> fire(Listener::onOpenDeployments));
         openConfigButton.addActionListener(e -> fire(Listener::onOpenConfig));
         openStandaloneConfButton.addActionListener(e -> fire(Listener::onOpenStandaloneConf));
@@ -153,6 +157,7 @@ public class ControlPanel extends JPanel {
         deployButton.setEnabled(!jobBusy && hasProject && eapConfigured);
         buildDeployButton.setEnabled(!jobBusy && hasProject && eapConfigured);
         openProjectButton.setEnabled(hasProject);
+        exportLaunchJsonButton.setEnabled(hasProject);
         openDeploymentsButton.setEnabled(eapConfigured);
         openConfigButton.setEnabled(eapConfigured);
         openStandaloneConfButton.setEnabled(eapConfigured);
@@ -208,6 +213,7 @@ public class ControlPanel extends JPanel {
         buttons.add(deployButton);
         buttons.add(buildDeployButton);
         buttons.add(openProjectButton);
+        buttons.add(exportLaunchJsonButton);
         card.add(buttons);
         return card;
     }
