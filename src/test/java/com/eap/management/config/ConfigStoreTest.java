@@ -1,8 +1,10 @@
 package com.eap.management.config;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 import org.junit.jupiter.api.Test;
@@ -39,6 +41,18 @@ class ConfigStoreTest {
         assertEquals("shop", loaded.getProjects().getFirst().getName());
         assertEquals("dev", loaded.getProjects().getFirst().getEnv().getFirst().getValue());
         assertEquals(project.getId(), loaded.getSelectedProjectId());
+        assertTrue(loaded.isRemoveDeployedWars());
         assertTrue(file.toFile().exists());
+
+        config.setRemoveDeployedWars(false);
+        store.save(config);
+        assertFalse(store.load().isRemoveDeployedWars());
+    }
+
+    @Test
+    void missingRemoveDeployedWarsDefaultsToTrue() throws Exception {
+        Path file = temp.resolve("config.json");
+        Files.writeString(file, "{\"eap\":{\"home\":\"C:/eap\"}}");
+        assertTrue(new ConfigStore(file).load().isRemoveDeployedWars());
     }
 }

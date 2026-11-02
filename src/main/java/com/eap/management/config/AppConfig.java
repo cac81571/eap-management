@@ -8,6 +8,7 @@ public class AppConfig {
     private EapSettings eap = new EapSettings();
     private String selectedProjectId = "";
     private String lastDeployedProjectId = "";
+    private boolean removeDeployedWars = true;
     private List<WarProject> projects = new ArrayList<>();
     private List<EnvVar> globalEnv = new ArrayList<>();
     private UiSettings ui = new UiSettings();
@@ -52,6 +53,14 @@ public class AppConfig {
 
     public void setLastDeployedProjectId(String lastDeployedProjectId) {
         this.lastDeployedProjectId = lastDeployedProjectId == null ? "" : lastDeployedProjectId;
+    }
+
+    public boolean isRemoveDeployedWars() {
+        return removeDeployedWars;
+    }
+
+    public void setRemoveDeployedWars(boolean removeDeployedWars) {
+        this.removeDeployedWars = removeDeployedWars;
     }
 
     public List<WarProject> getProjects() {

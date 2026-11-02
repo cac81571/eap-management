@@ -118,7 +118,7 @@ public class AppController {
                 if (project == null) {
                     return;
                 }
-                runJob("デプロイ", () -> deployService.switchAndDeploy(config, project, envFor(project), frame.log()));
+                runJob("デプロイ", () -> deployService.deploy(config, project, envFor(project), frame.log()));
             }
 
             @Override
@@ -127,10 +127,16 @@ public class AppController {
                 if (project == null) {
                     return;
                 }
-                runJob("ビルドしてデプロイ", () -> {
+                runJob("ビルド＋デプロイ", () -> {
                     buildService.build(project, envFor(project), frame.log());
-                    deployService.switchAndDeploy(config, project, envFor(project), frame.log());
+                    deployService.deploy(config, project, envFor(project), frame.log());
                 });
+            }
+
+            @Override
+            public void onRemoveDeployedWarsChanged(boolean enabled) {
+                config.setRemoveDeployedWars(enabled);
+                persistQuietly();
             }
 
             @Override
@@ -158,6 +164,7 @@ public class AppController {
                 openApp();
             }
         });
+        frame.controls().setRemoveDeployedWars(config.isRemoveDeployedWars());
         frame.controls().globalEnv().setOnChange(this::persistQuietly);
         frame.controls().projectEnv().setOnChange(this::persistQuietly);
         reloadLists();

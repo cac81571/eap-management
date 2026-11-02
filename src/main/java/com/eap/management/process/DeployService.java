@@ -34,7 +34,7 @@ public class DeployService {
         return running.get();
     }
 
-    public Path switchAndDeploy(AppConfig config, WarProject selected, Map<String, String> env, LogListener log)
+    public Path deploy(AppConfig config, WarProject selected, Map<String, String> env, LogListener log)
             throws IOException, InterruptedException {
         if (!running.compareAndSet(false, true)) {
             throw new IOException("別のデプロイが実行中です");
@@ -44,10 +44,16 @@ public class DeployService {
                     new IOException("デプロイする WAR が見つかりません。先にビルドしてください: " + selected.getWarPath()));
             String deployName = selected.resolvedDeployName(war);
             EapSettings eap = config.getEap();
-            Set<String> others = managedDeployNames(config, selected.getId());
-
-            log.append("DEPLOY", "デプロイ対象を切り替えます: " + selected.getName() + " -> " + deployName);
-            undeployAll(eap, others, env, log);
+            log.append("DEPLOY", "デプロイします: " + selected.getName() + " -> " + deployName);
+            if (config.isRemoveDeployedWars()) {
+                Set<String> others = new LinkedHashSet<>(managedDeployNames(config, selected.getId()));
+                others.addAll(deployedWarNames(eap.deploymentsDir()));
+                others.remove(deployName);
+                if (!others.isEmpty()) {
+                    log.append("DEPLOY", "デプロイ済みの WAR を削除します");
+                    undeployAll(eap, others, env, log);
+                }
+            }
             deploy(eap, war, deployName, env, log);
             config.setLastDeployedProjectId(selected.getId());
             return war;
@@ -172,6 +178,24 @@ public class DeployService {
             }
         }
         Files.deleteIfExists(dir);
+    }
+
+    static Set<String> deployedWarNames(Path deployments) {
+        Set<String> names = new LinkedHashSet<>();
+        if (deployments == null || !Files.isDirectory(deployments)) {
+            return names;
+        }
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(deployments)) {
+            for (Path path : stream) {
+                String name = path.getFileName().toString();
+                if (name.endsWith(".war")) {
+                    names.add(name);
+                }
+            }
+        } catch (IOException ignored) {
+            // skip unlistable directory
+        }
+        return names;
     }
 
     static Set<String> managedDeployNames(AppConfig config, String keepId) {

@@ -10,6 +10,7 @@ import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -35,6 +36,8 @@ public class ControlPanel extends JPanel {
 
         void onBuildAndDeploy();
 
+        void onRemoveDeployedWarsChanged(boolean enabled);
+
         void onOpenProject();
 
         void onOpenDeployments();
@@ -57,9 +60,10 @@ public class ControlPanel extends JPanel {
     private final JButton stopButton = new JButton("停止");
     private final JButton restartButton = new JButton("再起動");
     private final JButton buildButton = new JButton("ビルド");
-    private final JButton deployButton = new JButton("WAR を切り替えてデプロイ");
-    private final JButton buildDeployButton = new JButton("ビルドしてデプロイ");
+    private final JButton deployButton = new JButton("デプロイ");
+    private final JButton buildDeployButton = new JButton("ビルド＋デプロイ");
     private final JButton openProjectButton = new JButton("プロジェクトを開く");
+    private final JCheckBox removeDeployedWars = new JCheckBox("デプロイ済みの WAR を削除する", true);
     private final JButton openDeploymentsButton = new JButton("deployments を開く");
     private final JButton openConfigButton = new JButton("設定ファイルを開く");
     private final JButton openStandaloneConfButton = new JButton("standalone.conf.bat を開く");
@@ -96,6 +100,7 @@ public class ControlPanel extends JPanel {
         openConfigButton.addActionListener(e -> fire(Listener::onOpenConfig));
         openStandaloneConfButton.addActionListener(e -> fire(Listener::onOpenStandaloneConf));
         openAppButton.addActionListener(e -> fire(Listener::onOpenApp));
+        removeDeployedWars.addActionListener(e -> fire(l -> l.onRemoveDeployedWarsChanged(removeDeployedWars.isSelected())));
     }
 
     public void setListener(Listener listener) {
@@ -153,6 +158,10 @@ public class ControlPanel extends JPanel {
         openStandaloneConfButton.setEnabled(eapConfigured);
     }
 
+    public void setRemoveDeployedWars(boolean enabled) {
+        removeDeployedWars.setSelected(enabled);
+    }
+
     private JPanel eapCard() {
         statusDot.setFont(statusDot.getFont().deriveFont(Font.BOLD, 16f));
         statusLabel.setFont(statusLabel.getFont().deriveFont(Font.BOLD, 15f));
@@ -177,7 +186,7 @@ public class ControlPanel extends JPanel {
     }
 
     private JPanel warCard() {
-        JPanel card = titledCard("WAR のビルドと切り替え");
+        JPanel card = titledCard("WAR のビルドとデプロイ");
         selectedLabel.setFont(selectedLabel.getFont().deriveFont(14f));
         selectedLabel.setAlignmentX(LEFT_ALIGNMENT);
         lastDeployedLabel.setAlignmentX(LEFT_ALIGNMENT);
@@ -187,6 +196,10 @@ public class ControlPanel extends JPanel {
         card.add(lastDeployedLabel);
         card.add(Box.createVerticalStrut(2));
         card.add(appUrlLabel);
+        card.add(Box.createVerticalStrut(8));
+
+        removeDeployedWars.setAlignmentX(LEFT_ALIGNMENT);
+        card.add(removeDeployedWars);
         card.add(Box.createVerticalStrut(8));
 
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
