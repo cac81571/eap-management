@@ -113,7 +113,7 @@ public class LogPanel extends JPanel implements LogListener {
     public void updateUI() {
         super.updateUI();
         if (area != null) {
-            runOnEdt(this::rebuild);
+            SwingUtilities.invokeLater(this::rebuild);
         }
     }
 
@@ -156,25 +156,32 @@ public class LogPanel extends JPanel implements LogListener {
     }
 
     private void rebuild() {
-        boolean follow = filterText.isEmpty() && isFollowTail();
-        StyledDocument doc = area.getStyledDocument();
+        if (area == null || filter == null || hits == null) {
+            return;
+        }
         try {
-            doc.remove(0, doc.getLength());
-        } catch (BadLocationException ignored) {
-            area.setText("");
-        }
-        int visible = 0;
-        for (LogEntry entry : entries) {
-            if (matches(entry)) {
-                insert(entry);
-                visible++;
+            boolean follow = filterText.isEmpty() && isFollowTail();
+            StyledDocument doc = area.getStyledDocument();
+            try {
+                doc.remove(0, doc.getLength());
+            } catch (BadLocationException ignored) {
+                area.setText("");
             }
-        }
-        updateHitLabel(visible, entries.size());
-        if (follow) {
-            followTail();
-        } else {
-            area.setCaretPosition(0);
+            int visible = 0;
+            for (LogEntry entry : entries) {
+                if (matches(entry)) {
+                    insert(entry);
+                    visible++;
+                }
+            }
+            updateHitLabel(visible, entries.size());
+            if (follow) {
+                followTail();
+            } else {
+                setCaretSafely(0);
+            }
+        } catch (RuntimeException ignored) {
+            // L&F 更新中の再描画失敗はアプリを落とさない
         }
     }
 
@@ -223,7 +230,16 @@ public class LogPanel extends JPanel implements LogListener {
     }
 
     private void followTail() {
-        area.setCaretPosition(area.getDocument().getLength());
+        setCaretSafely(area.getDocument().getLength());
+    }
+
+    private void setCaretSafely(int position) {
+        try {
+            int max = area.getDocument().getLength();
+            area.setCaretPosition(Math.max(0, Math.min(position, max)));
+        } catch (IllegalArgumentException ignored) {
+            // ignore invalid caret during document rebuild
+        }
     }
 
     private SimpleAttributeSet attributes(LogLevel level) {
@@ -243,7 +259,10 @@ public class LogPanel extends JPanel implements LogListener {
             case DEBUG -> dark ? new Color(0xBDBDBD) : new Color(0x757575);
             case OTHER -> {
                 Color fallback = UIManager.getColor("TextPane.foreground");
-                yield fallback == null ? UIManager.getColor("Label.foreground") : fallback;
+                if (fallback == null) {
+                    fallback = UIManager.getColor("Label.foreground");
+                }
+                yield fallback != null ? fallback : (dark ? Color.LIGHT_GRAY : Color.DARK_GRAY);
             }
         };
     }

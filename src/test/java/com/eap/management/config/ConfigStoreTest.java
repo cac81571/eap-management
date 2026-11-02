@@ -50,6 +50,20 @@ class ConfigStoreTest {
     }
 
     @Test
+    void ignoresUnknownPropertiesFromOtherBranches() throws Exception {
+        Path file = temp.resolve("config.json");
+        Files.writeString(file, """
+                {
+                  "eap": {
+                    "home": "C:/eap",
+                    "wildflyMavenPluginVersion": "6.2.0.Final"
+                  }
+                }
+                """);
+        assertEquals("C:/eap", new ConfigStore(file).load().getEap().getHome());
+    }
+
+    @Test
     void missingRemoveDeployedWarsDefaultsToTrue() throws Exception {
         Path file = temp.resolve("config.json");
         Files.writeString(file, "{\"eap\":{\"home\":\"C:/eap\"}}");

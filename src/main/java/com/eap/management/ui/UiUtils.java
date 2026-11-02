@@ -23,8 +23,15 @@ public final class UiUtils {
     }
 
     public static Border cardBorder() {
+        java.awt.Color color = javax.swing.UIManager.getColor("Component.borderColor");
+        if (color == null) {
+            color = javax.swing.UIManager.getColor("Separator.foreground");
+        }
+        if (color == null) {
+            color = new java.awt.Color(180, 180, 180);
+        }
         return BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(javax.swing.UIManager.getColor("Component.borderColor"), 1, true),
+                BorderFactory.createLineBorder(color, 1, true),
                 BorderFactory.createEmptyBorder(16, 16, 16, 16)
         );
     }

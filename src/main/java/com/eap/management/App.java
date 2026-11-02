@@ -1,5 +1,12 @@
 package com.eap.management;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.time.LocalDateTime;
+
 import javax.swing.SwingUtilities;
 
 import com.eap.management.config.AppConfig;
@@ -15,6 +22,7 @@ public final class App {
     public static void main(String[] args) {
         System.setProperty("awt.useSystemAAFontSettings", "on");
         System.setProperty("swing.aatext", "true");
+        Thread.setDefaultUncaughtExceptionHandler(App::handleCrash);
         SwingUtilities.invokeLater(() -> {
             try {
                 ConfigStore store = new ConfigStore();
@@ -25,8 +33,24 @@ public final class App {
                 controller.bind(frame);
                 frame.setVisible(true);
             } catch (Exception e) {
+                handleCrash(Thread.currentThread(), e);
                 UiUtils.error(null, "起動に失敗しました。", e);
             }
         });
+    }
+
+    private static void handleCrash(Thread thread, Throwable error) {
+        error.printStackTrace();
+        try {
+            Path log = ConfigStore.defaultFile().getParent().resolve("crash.log");
+            Files.createDirectories(log.getParent());
+            StringWriter body = new StringWriter();
+            body.write(LocalDateTime.now() + " [" + thread.getName() + "]\n");
+            error.printStackTrace(new PrintWriter(body));
+            body.write("\n");
+            Files.writeString(log, body.toString(), StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+        } catch (Exception ignored) {
+            // keep going
+        }
     }
 }

@@ -6,4 +6,4 @@ if not exist "target\eap-manager.jar" (
   call mvn -q -DskipTests package
   if errorlevel 1 exit /b 1
 )
-java -jar "target\eap-manager.jar" %*
+start "" javaw -jar "target\eap-manager.jar" %*
