@@ -5,6 +5,8 @@ JBoss / WildFly EAP の起動・停止、複数 WAR プロジェクトのビル�
 ## できること
 
 - EAP の起動 / デバッグ起動 / 停止（`standalone --debug` と `jboss-cli`）
+- ManagementRealm 用の管理ユーザ / パスワードは任意。両方そろっているときだけ jboss-cli に付け、空なら認証なし（パスワードは VS Code の `settings.json` には出さない）
+- EAP 設定の **管理ユーザを作成** で `add-user` を実行し、管理コンソール用ユーザを作成・更新
 - 選択プロジェクトへ VS Code 用 `launch.json`（Attach to EAP）と `tasks.json`（GUI と同じ起動 / 停止 / ビルド / デプロイ / アンデプロイ。パスは `settings.json` の `eap.*` を `${config:eap.home}` で参照）を出力
 - 複数 WAR プロジェクトの登録・編集・削除
 - 選択した WAR のビルド（既定は `mvn -DskipTests package`）
@@ -42,7 +44,7 @@ mvn -q exec:java
 
 ## 使い方
 
-1. メニューの **設定 → EAP 設定** で EAP ホーム（例: `C:\opt\jboss-eap-7.4`）を指定します。テーマは **表示 → ダークテーマ** から切り替えます。
+1. メニューの **設定 → EAP 設定** で EAP ホーム（例: `C:\opt\jboss-eap-7.4`）を指定します。管理ユーザ / パスワードは任意です。ローカル認証のままなら空で構いません。認証が必要なときだけ入力し、必要なら **管理ユーザを作成** で EAP に登録します。テーマは **表示 → ダークテーマ** から切り替えます。
 2. 左の **追加** から WAR プロジェクトを登録します。
    - プロジェクトディレクトリ
    - ビルドコマンド（既定: `mvn -DskipTests package`）
@@ -51,7 +53,7 @@ mvn -q exec:java
 3. 左リストで「デプロイする WAR」を選びます。
 4. **起動** で EAP を起動し、**ビルド** / **デプロイ** / **ビルド＋デプロイ** で成果物を配置します。
    既定で **既存の WAR を削除する** がオンです。オフにすると既存のデプロイを残したまま追加配置します。
-5. **tasks.json を出力** で VS Code 用タスクを書き出します。タスクの実行から **起動 / デバッグ起動 / 停止 / 再起動 / ビルド / デプロイ / アンデプロイ / ビルド＋デプロイ** を GUI と同じ手順で実行できます。デプロイ方式がディレクトリコピーなら `deployments` へコピーし、jboss-cli なら CLI デプロイします。EAP ホーム、WAR ファイル、ヒープ、ポートは `.vscode/settings.json` の `eap.*` に出し、`tasks.json` からは `${config:eap.home}` / `${config:eap.warFile}` のように参照します。
+5. **tasks.json を出力** で VS Code 用タスクを書き出します。タスクの実行から **起動 / デバッグ起動 / 停止 / 再起動 / ビルド / デプロイ / アンデプロイ / ビルド＋デプロイ** を GUI と同じ手順で実行できます。デプロイ方式がディレクトリコピーなら `deployments` へコピーし、jboss-cli なら CLI デプロイします。EAP ホーム、WAR ファイル、ヒープ、ポート、管理ユーザ名は `.vscode/settings.json` の `eap.*` に出し、`tasks.json` からは `${config:eap.home}` / `${config:eap.warFile}` のように参照します。管理パスワードはプロジェクト側には書き出さないため、VS Code から認証付き CLI を使う場合は `settings.json` に手で足すか、GUI から実行してください。
 
 環境変数は画面右側で編集します。
 

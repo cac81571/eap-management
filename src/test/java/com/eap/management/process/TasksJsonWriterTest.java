@@ -1,6 +1,7 @@
 package com.eap.management.process;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Files;
@@ -77,7 +78,9 @@ class TasksJsonWriterTest {
         assertEquals("${config:eap.cliScript}", stop.path("command").asText());
         assertTrue(containsArg(stop, "--command=:shutdown"));
         assertTrue(containsArg(stop, "--controller=${config:eap.managementHost}:${config:eap.managementPort}"));
+        assertFalse(containsArg(stop, "--user=${config:eap.managementUser}"));
         assertEquals("${config:eap.cliJavaOpts}", stop.path("options").path("env").path("JAVA_OPTS").asText());
+        assertTrue(settings.path("eap.managementUser").isMissingNode());
 
         assertEquals("mvn -DskipTests package", find(tasks, "ビルド").path("command").asText());
         assertTrue(find(tasks, "ビルド").path("options").path("env").isMissingNode());
@@ -116,6 +119,8 @@ class TasksJsonWriterTest {
         AppConfig config = new AppConfig();
         config.getEap().setHome("C:/eap");
         config.getEap().setDeployMode(DeployMode.CLI);
+        config.getEap().setManagementUser("admin");
+        config.getEap().setManagementPassword("secret");
         WarProject project = new WarProject();
         project.setProjectDir(temp.toString());
         project.setDeployName("shop.war");
@@ -123,14 +128,19 @@ class TasksJsonWriterTest {
         JsonNode tasks = new ObjectMapper().readTree(TasksJsonWriter.write(temp, config, project).toFile()).path("tasks");
         JsonNode deploy = find(tasks, "デプロイ");
         assertEquals("${config:eap.cliScript}", deploy.path("command").asText());
+        assertTrue(containsArg(deploy, "--user=${config:eap.managementUser}"));
+        assertFalse(containsArg(deploy, "--password=secret"));
         assertTrue(containsArg(deploy,
                 "--command=deploy \"${workspaceFolder}/${config:eap.warFile}\" --name=${config:eap.deployName} --force"));
         JsonNode undeploy = find(tasks, "アンデプロイ");
         assertEquals("${config:eap.cliScript}", undeploy.path("command").asText());
         assertTrue(containsArg(undeploy, "--command=undeploy ${config:eap.deployName}"));
+        assertTrue(containsArg(undeploy, "--user=${config:eap.managementUser}"));
         JsonNode settings = new ObjectMapper().readTree(temp.resolve(".vscode").resolve("settings.json").toFile());
         assertEquals(Os.isWindows() ? "target\\shop.war" : "target/shop.war", settings.path("eap.warFile").asText());
         assertEquals("shop.war", settings.path("eap.deployName").asText());
+        assertEquals("admin", settings.path("eap.managementUser").asText());
+        assertTrue(settings.path("eap.managementPassword").isMissingNode());
     }
 
     @Test

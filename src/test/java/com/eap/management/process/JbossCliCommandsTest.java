@@ -1,6 +1,7 @@
 package com.eap.management.process;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
@@ -20,6 +21,35 @@ class JbossCliCommandsTest {
         assertEquals("--connect", args.get(0));
         assertEquals("--controller=127.0.0.1:9990", args.get(1));
         assertEquals("--command=:shutdown", args.get(2));
+        assertFalse(args.stream().anyMatch(arg -> arg.startsWith("--user=")));
+        assertFalse(args.stream().anyMatch(arg -> arg.startsWith("--password=")));
+    }
+
+    @Test
+    void appendsAuthWhenManagementUserAndPasswordAreSet() {
+        EapSettings eap = new EapSettings();
+        eap.setHome("C:/eap");
+        eap.setManagementUser("admin");
+        eap.setManagementPassword("secret");
+        List<String> args = JbossCliCommands.arguments(JbossCliTask.SHUTDOWN, eap, null);
+        assertEquals("--connect", args.get(0));
+        assertEquals("--controller=127.0.0.1:9990", args.get(1));
+        assertEquals("--user=admin", args.get(2));
+        assertEquals("--password=secret", args.get(3));
+        assertEquals("--command=:shutdown", args.get(4));
+        assertTrue(eap.hasManagementCredentials());
+    }
+
+    @Test
+    void skipsAuthWhenPasswordMissing() {
+        EapSettings eap = new EapSettings();
+        eap.setHome("C:/eap");
+        eap.setManagementUser("admin");
+        eap.setManagementPassword("");
+        List<String> args = JbossCliCommands.arguments(JbossCliTask.SHUTDOWN, eap, null);
+        assertFalse(eap.hasManagementCredentials());
+        assertFalse(args.stream().anyMatch(arg -> arg.startsWith("--user=")));
+        assertFalse(args.stream().anyMatch(arg -> arg.startsWith("--password=")));
     }
 
     @Test

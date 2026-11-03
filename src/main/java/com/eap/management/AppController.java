@@ -15,13 +15,15 @@ import com.eap.management.config.ConfigStore;
 import com.eap.management.config.EnvVar;
 import com.eap.management.config.WarProject;
 import com.eap.management.process.BuildService;
+import com.eap.management.process.CommandResult;
 import com.eap.management.process.DeployService;
 import com.eap.management.process.EapService;
 import com.eap.management.process.EapStatus;
 import com.eap.management.process.LaunchJsonWriter;
+import com.eap.management.process.ManagementUserService;
 import com.eap.management.process.Os;
-import com.eap.management.process.TasksJsonWriter;
 import com.eap.management.process.ProcessService;
+import com.eap.management.process.TasksJsonWriter;
 import com.eap.management.ui.EapSettingsDialog;
 import com.eap.management.ui.MainFrame;
 import com.eap.management.ui.ProjectEditDialog;
@@ -34,6 +36,7 @@ public class AppController {
     private final EapService eapService;
     private final BuildService buildService;
     private final DeployService deployService;
+    private final ManagementUserService managementUserService;
     private final ExecutorService workers = Executors.newSingleThreadExecutor(r -> {
         Thread thread = new Thread(r, "eap-manager-worker");
         thread.setDaemon(true);
@@ -51,6 +54,7 @@ public class AppController {
         this.eapService = new EapService(processes);
         this.buildService = new BuildService(processes);
         this.deployService = new DeployService(processes);
+        this.managementUserService = new ManagementUserService(processes);
         this.poller = new Timer(1500, e -> refresh());
     }
 
@@ -196,6 +200,16 @@ public class AppController {
 
     public void editEapSettings() {
         EapSettingsDialog dialog = new EapSettingsDialog(frame, config.getEap());
+        dialog.setOnCreateManagementUser(() -> {
+            dialog.applyTo(config.getEap());
+            persistQuietly();
+            runJob("管理ユーザ作成", () -> {
+                CommandResult result = managementUserService.create(config.getEap(), frame.log());
+                if (!result.succeeded()) {
+                    throw new IOException("管理ユーザの作成に失敗しました");
+                }
+            });
+        });
         dialog.setVisible(true);
         if (dialog.isAccepted()) {
             dialog.applyTo(config.getEap());

@@ -15,6 +15,8 @@ public class EapSettings {
     private String extraArgs = "";
     private String consoleEncoding = "AUTO";
     private DeployMode deployMode = DeployMode.DIRECTORY;
+    private String managementUser = "";
+    private String managementPassword = "";
 
     public Path homePath() {
         return home == null || home.isBlank() ? null : Path.of(home.trim());
@@ -39,6 +41,14 @@ public class EapSettings {
             return null;
         }
         return bin.resolve(Os.isWindows() ? "jboss-cli.bat" : "jboss-cli.sh");
+    }
+
+    public Path addUserScript() {
+        Path bin = binDir();
+        if (bin == null) {
+            return null;
+        }
+        return bin.resolve(Os.isWindows() ? "add-user.bat" : "add-user.sh");
     }
 
     public Path deploymentsDir() {
@@ -173,5 +183,27 @@ public class EapSettings {
 
     public void setDeployMode(DeployMode deployMode) {
         this.deployMode = deployMode == null ? DeployMode.DIRECTORY : deployMode;
+    }
+
+    /** jboss-cli に --user/--password を付けるか。両方そろっているときだけ true（未設定ならローカル認証）。 */
+    public boolean hasManagementCredentials() {
+        return managementUser != null && !managementUser.isBlank()
+                && managementPassword != null && !managementPassword.isEmpty();
+    }
+
+    public String getManagementUser() {
+        return managementUser == null ? "" : managementUser;
+    }
+
+    public void setManagementUser(String managementUser) {
+        this.managementUser = managementUser == null ? "" : managementUser.trim();
+    }
+
+    public String getManagementPassword() {
+        return managementPassword == null ? "" : managementPassword;
+    }
+
+    public void setManagementPassword(String managementPassword) {
+        this.managementPassword = managementPassword == null ? "" : managementPassword;
     }
 }

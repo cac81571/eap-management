@@ -166,11 +166,8 @@ public class EapService {
             throw new IOException("jboss-cli が見つかりません。EAP ホームを確認してください。");
         }
         String controller = settings.managementHost() + ":" + settings.getManagementPort();
-        List<String> args = List.of(
-                "--connect",
-                "--controller=" + controller,
-                "--command=:shutdown"
-        );
+        List<String> args = JbossCliCommands.connectArgs(settings);
+        args.add("--command=:shutdown");
         log.append("EAP", "停止します: jboss-cli --controller=" + controller);
         Process cliProcess = processes.start(Os.script(cli, args), settings.homePath(), env, "EAP", log);
         boolean down = waitUntilStopped(settings, log, STOP_WAIT);

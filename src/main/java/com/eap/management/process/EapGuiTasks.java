@@ -27,7 +27,7 @@ final class EapGuiTasks {
         List<TaskSpec> specs = new ArrayList<>();
         specs.add(standalone(EapGuiTask.START, eap, false));
         specs.add(standalone(EapGuiTask.START_DEBUG, eap, true));
-        specs.add(cli(EapGuiTask.STOP, JbossCliTask.SHUTDOWN, project));
+        specs.add(cli(EapGuiTask.STOP, eap, JbossCliTask.SHUTDOWN, project));
         specs.add(TaskSpec.compound(EapGuiTask.RESTART.label(), List.of(
                 EapGuiTask.STOP.label(), EapGuiTask.START.label())));
         specs.add(build(project));
@@ -49,11 +49,11 @@ final class EapGuiTasks {
         );
     }
 
-    private static TaskSpec cli(EapGuiTask task, JbossCliTask cliTask, WarProject project) {
+    private static TaskSpec cli(EapGuiTask task, EapSettings eap, JbossCliTask cliTask, WarProject project) {
         return TaskSpec.command(
                 task.label(),
                 VscodeEapSettings.CLI_SCRIPT,
-                cliArgs(cliTask, project),
+                cliArgs(eap, cliTask, project),
                 VscodeEapSettings.HOME,
                 false,
                 CLI_ENV
@@ -69,7 +69,7 @@ final class EapGuiTasks {
 
     private static TaskSpec deploy(EapSettings eap, WarProject project) {
         if (eap.getDeployMode() == DeployMode.CLI) {
-            return cli(EapGuiTask.DEPLOY, JbossCliTask.DEPLOY, project);
+            return cli(EapGuiTask.DEPLOY, eap, JbossCliTask.DEPLOY, project);
         }
         if (Os.isWindows()) {
             return TaskSpec.command(
@@ -91,7 +91,7 @@ final class EapGuiTasks {
 
     private static TaskSpec undeploy(EapSettings eap, WarProject project) {
         if (eap.getDeployMode() == DeployMode.CLI) {
-            return cli(EapGuiTask.UNDEPLOY, JbossCliTask.UNDEPLOY, project);
+            return cli(EapGuiTask.UNDEPLOY, eap, JbossCliTask.UNDEPLOY, project);
         }
         if (Os.isWindows()) {
             return TaskSpec.command(
@@ -129,12 +129,15 @@ final class EapGuiTasks {
         return args;
     }
 
-    private static List<String> cliArgs(JbossCliTask cliTask, WarProject project) {
-        return List.of(
-                "--connect",
-                "--controller=" + VscodeEapSettings.MANAGEMENT_HOST + ":" + VscodeEapSettings.MANAGEMENT_PORT,
-                "--command=" + cliCommand(cliTask, project)
-        );
+    private static List<String> cliArgs(EapSettings eap, JbossCliTask cliTask, WarProject project) {
+        List<String> args = new ArrayList<>();
+        args.add("--connect");
+        args.add("--controller=" + VscodeEapSettings.MANAGEMENT_HOST + ":" + VscodeEapSettings.MANAGEMENT_PORT);
+        if (eap.hasManagementCredentials()) {
+            args.add("--user=" + VscodeEapSettings.MANAGEMENT_USER);
+        }
+        args.add("--command=" + cliCommand(cliTask, project));
+        return args;
     }
 
     private static String cliCommand(JbossCliTask cliTask, WarProject project) {

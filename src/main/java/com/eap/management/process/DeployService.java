@@ -103,8 +103,8 @@ public class DeployService {
         if (cli == null || !Files.isRegularFile(cli)) {
             throw new IOException("jboss-cli が見つかりません");
         }
-        String controller = eap.managementHost() + ":" + eap.getManagementPort();
-        List<String> args = List.of("--connect", "--controller=" + controller, "--command=" + command);
+        List<String> args = JbossCliCommands.connectArgs(eap);
+        args.add("--command=" + command);
         CommandResult result = processes.run(Os.script(cli, args), eap.homePath(), env, "DEPLOY", log,
                 Duration.ofSeconds(60));
         if (!result.succeeded() && failOnError) {

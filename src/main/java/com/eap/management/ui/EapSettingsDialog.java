@@ -11,7 +11,9 @@ import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JPasswordField;
 import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 
@@ -27,11 +29,16 @@ public class EapSettingsDialog extends JDialog {
     private final JTextField managementPort = new JTextField();
     private final JTextField debugPort = new JTextField();
     private final JTextField extraArgs = new JTextField();
+    private final JTextField managementUser = new JTextField();
+    private final JPasswordField managementPassword = new JPasswordField();
     private final JComboBox<String> consoleEncoding = new JComboBox<>(
             ConsoleEncoding.choices().toArray(String[]::new));
     private final JRadioButton directoryMode = new JRadioButton("ディレクトリコピー (standalone/deployments)");
     private final JRadioButton cliMode = new JRadioButton("jboss-cli");
+    private final JButton createManagementUser = new JButton("管理ユーザを作成");
     private boolean accepted;
+    private Runnable onCreateManagementUser = () -> {
+    };
 
     public EapSettingsDialog(JFrame owner, EapSettings settings) {
         super(owner, "EAP 設定", true);
@@ -44,6 +51,8 @@ public class EapSettingsDialog extends JDialog {
         managementPort.setText(String.valueOf(settings.getManagementPort()));
         debugPort.setText(String.valueOf(settings.getDebugPort()));
         extraArgs.setText(settings.getExtraArgs());
+        managementUser.setText(settings.getManagementUser());
+        managementPassword.setText(settings.getManagementPassword());
         consoleEncoding.setSelectedItem(ConsoleEncoding.normalize(settings.getConsoleEncoding()));
         directoryMode.setSelected(settings.getDeployMode() == DeployMode.DIRECTORY);
         cliMode.setSelected(settings.getDeployMode() == DeployMode.CLI);
@@ -63,6 +72,11 @@ public class EapSettingsDialog extends JDialog {
         homeRow.add(home, BorderLayout.CENTER);
         homeRow.add(browse, BorderLayout.EAST);
 
+        JLabel authHint = new JLabel("任意。認証が必要なときだけ入力。空のままなら jboss-cli は認証なし");
+        authHint.setForeground(javax.swing.UIManager.getColor("Label.disabledForeground"));
+        Icons.apply(createManagementUser, Icons.plus());
+        createManagementUser.addActionListener(e -> onCreateManagementUser.run());
+
         JPanel form = new JPanel(new GridBagLayout());
         form.setBorder(javax.swing.BorderFactory.createEmptyBorder(16, 16, 8, 16));
         GridBagConstraints gbc = UiUtils.formConstraints();
@@ -74,8 +88,12 @@ public class EapSettingsDialog extends JDialog {
         UiUtils.addFormRow(form, gbc, 5, "デバッグポート", debugPort);
         UiUtils.addFormRow(form, gbc, 6, "追加引数", extraArgs);
         UiUtils.addFormRow(form, gbc, 7, "ログ文字コード", consoleEncoding);
-        UiUtils.addFormRow(form, gbc, 8, "デプロイ方式", directoryMode);
-        gbc.gridy = 9;
+        UiUtils.addFormRow(form, gbc, 8, "管理ユーザ（任意）", managementUser);
+        UiUtils.addFormRow(form, gbc, 9, "管理パスワード（任意）", managementPassword);
+        UiUtils.addFormRow(form, gbc, 10, "", authHint);
+        UiUtils.addFormRow(form, gbc, 11, "", createManagementUser);
+        UiUtils.addFormRow(form, gbc, 12, "デプロイ方式", directoryMode);
+        gbc.gridy = 13;
         gbc.gridx = 1;
         form.add(cliMode, gbc);
 
@@ -97,12 +115,17 @@ public class EapSettingsDialog extends JDialog {
 
         add(form, BorderLayout.CENTER);
         add(buttons, BorderLayout.SOUTH);
-        setSize(640, 510);
+        setSize(640, 660);
         setLocationRelativeTo(owner);
     }
 
     public boolean isAccepted() {
         return accepted;
+    }
+
+    public void setOnCreateManagementUser(Runnable onCreateManagementUser) {
+        this.onCreateManagementUser = onCreateManagementUser == null ? () -> {
+        } : onCreateManagementUser;
     }
 
     public void applyTo(EapSettings settings) {
@@ -114,6 +137,8 @@ public class EapSettingsDialog extends JDialog {
         settings.setDebugPort(parsePort(debugPort.getText(), "デバッグポート"));
         settings.setExtraArgs(extraArgs.getText().trim());
         settings.setConsoleEncoding((String) consoleEncoding.getSelectedItem());
+        settings.setManagementUser(managementUser.getText());
+        settings.setManagementPassword(new String(managementPassword.getPassword()));
         settings.setDeployMode(cliMode.isSelected() ? DeployMode.CLI : DeployMode.DIRECTORY);
     }
 

@@ -22,11 +22,25 @@ public final class JbossCliCommands {
         if (!task.cli()) {
             return EapService.startArgs(eap, task.debug());
         }
+        List<String> args = connectArgs(eap);
+        args.add("--command=" + cliCommand(task, project));
+        return args;
+    }
+
+    public static List<String> connectArgs(EapSettings eap) {
         List<String> args = new ArrayList<>();
         args.add("--connect");
         args.add("--controller=" + eap.managementHost() + ":" + eap.getManagementPort());
-        args.add("--command=" + cliCommand(task, project));
+        appendAuth(args, eap);
         return args;
+    }
+
+    public static void appendAuth(List<String> args, EapSettings eap) {
+        if (eap == null || !eap.hasManagementCredentials()) {
+            return;
+        }
+        args.add("--user=" + eap.getManagementUser());
+        args.add("--password=" + eap.getManagementPassword());
     }
 
     static String cliCommand(JbossCliTask task, WarProject project) {

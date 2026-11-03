@@ -26,6 +26,7 @@ final class VscodeEapSettings {
     static final String KEY_MANAGEMENT_HOST = "eap.managementHost";
     static final String KEY_HTTP_PORT = "eap.httpPort";
     static final String KEY_MANAGEMENT_PORT = "eap.managementPort";
+    static final String KEY_MANAGEMENT_USER = "eap.managementUser";
     static final String KEY_DEBUG_PORT = "eap.debugPort";
     static final String KEY_WAR_FILE = "eap.warFile";
     static final String KEY_DEPLOY_NAME = "eap.deployName";
@@ -45,6 +46,7 @@ final class VscodeEapSettings {
     static final String MANAGEMENT_HOST = config(KEY_MANAGEMENT_HOST);
     static final String HTTP_PORT = config(KEY_HTTP_PORT);
     static final String MANAGEMENT_PORT = config(KEY_MANAGEMENT_PORT);
+    static final String MANAGEMENT_USER = config(KEY_MANAGEMENT_USER);
     static final String DEBUG_PORT = config(KEY_DEBUG_PORT);
     static final String WAR_FILE = config(KEY_WAR_FILE);
     static final String DEPLOY_NAME = config(KEY_DEPLOY_NAME);
@@ -75,6 +77,11 @@ final class VscodeEapSettings {
         root.put(KEY_HTTP_PORT, eap.getHttpPort());
         root.put(KEY_MANAGEMENT_PORT, eap.getManagementPort());
         root.put(KEY_DEBUG_PORT, eap.getDebugPort());
+        if (eap.hasManagementCredentials()) {
+            root.put(KEY_MANAGEMENT_USER, eap.getManagementUser());
+        } else {
+            root.remove(KEY_MANAGEMENT_USER);
+        }
         root.put(KEY_WAR_FILE, JbossCliCommands.workspaceWarRelative(project));
         root.put(KEY_DEPLOY_NAME, JbossCliCommands.runtimeName(project));
         MAPPER.writerWithDefaultPrettyPrinter().writeValue(file.toFile(), root);
