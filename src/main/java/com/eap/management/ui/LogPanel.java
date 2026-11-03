@@ -47,7 +47,7 @@ public class LogPanel extends JPanel implements LogListener {
 
     public LogPanel() {
         super(new BorderLayout(8, 8));
-        setBorder(BorderFactory.createEmptyBorder(8, 16, 16, 16));
+        setBorder(BorderFactory.createEmptyBorder(4, 8, 8, 8));
         area.setEditable(false);
         area.setFont(LOG_FONT);
 
@@ -78,6 +78,7 @@ public class LogPanel extends JPanel implements LogListener {
         }, KeyStroke.getKeyStroke(KeyEvent.VK_F, KeyEvent.CTRL_DOWN_MASK), JComponent.WHEN_IN_FOCUSED_WINDOW);
 
         JButton clear = new JButton("クリア");
+        Icons.apply(clear, Icons.clear());
         clear.addActionListener(e -> clear());
 
         JPanel tools = new JPanel(new BorderLayout(8, 0));

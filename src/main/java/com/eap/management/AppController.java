@@ -184,7 +184,7 @@ public class AppController {
         poller.start();
         frame.log().append("APP", "設定ファイル: " + store.file());
         if (!config.getEap().looksInstalled()) {
-            frame.log().append("APP", "EAP ホームを設定してください。右上の「EAP 設定」から指定できます。");
+            frame.log().append("APP", "EAP ホームを設定してください。メニューの「設定 → EAP 設定」から指定できます。");
         }
     }
 
@@ -414,19 +414,24 @@ public class AppController {
         }
         EapStatus status = eapService.status(config.getEap());
         boolean configured = config.getEap().looksInstalled();
-        String hint;
+        String hint = null;
+        String managementEndpoint = null;
+        String managementUrl = null;
+        String httpUrl = null;
         if (!configured) {
             hint = "EAP ホームを設定してください";
         } else if (status == EapStatus.RUNNING) {
-            hint = "管理 " + config.getEap().managementHost() + ":" + config.getEap().getManagementPort()
-                    + " / HTTP " + config.getEap().httpBaseUrl();
+            managementEndpoint = config.getEap().managementEndpoint();
+            managementUrl = config.getEap().managementUrl();
+            httpUrl = config.getEap().httpBaseUrl();
             if (eapService.isDebugMode()) {
-                hint += " / デバッグ localhost:" + config.getEap().getDebugPort();
+                hint = "デバッグ localhost:" + config.getEap().getDebugPort();
             }
         } else {
             hint = config.getEap().getHome();
         }
-        frame.controls().setStatus(status, hint, eapService.isDebugMode());
+        frame.controls().setStatus(
+                status, hint, managementEndpoint, managementUrl, httpUrl, eapService.isDebugMode());
         frame.controls().setBusy(status, jobBusy, config.selectedProject().isPresent(), configured);
         String lastName = config.findProject(config.getLastDeployedProjectId())
                 .map(WarProject::getName)

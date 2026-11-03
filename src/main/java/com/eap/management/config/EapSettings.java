@@ -86,6 +86,14 @@ public class EapSettings {
         return "http://localhost:" + httpPort + "/";
     }
 
+    public String managementUrl() {
+        return "http://" + managementHost() + ":" + getManagementPort() + "/";
+    }
+
+    public String managementEndpoint() {
+        return managementHost() + ":" + getManagementPort();
+    }
+
     public String applicationUrl(String contextRoot) {
         String base = httpBaseUrl();
         if (contextRoot == null || contextRoot.isBlank()) {

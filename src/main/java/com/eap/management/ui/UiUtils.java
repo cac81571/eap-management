@@ -32,7 +32,7 @@ public final class UiUtils {
         }
         return BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(color, 1, true),
-                BorderFactory.createEmptyBorder(16, 16, 16, 16)
+                BorderFactory.createEmptyBorder(8, 10, 8, 10)
         );
     }
 

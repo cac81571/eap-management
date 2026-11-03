@@ -39,41 +39,22 @@ public class ProjectListPanel extends JPanel {
     private String lastDeployedId = "";
 
     public ProjectListPanel() {
-        super(new BorderLayout(8, 8));
+        super(new BorderLayout(6, 6));
         setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createMatteBorder(0, 0, 0, 1, UIManager.getColor("Component.borderColor")),
-                BorderFactory.createEmptyBorder(16, 16, 16, 16)
+                BorderFactory.createEmptyBorder(6, 8, 8, 8)
         ));
-        setPreferredSize(new Dimension(320, 0));
+        setPreferredSize(new Dimension(280, 0));
 
         JLabel title = new JLabel("WAR プロジェクト");
-        title.setFont(title.getFont().deriveFont(Font.BOLD, 15f));
-        JLabel hint = new JLabel("<html>追加したプロジェクトを選ぶと、<br/>それがデプロイ対象になります。</html>");
-        hint.setForeground(UIManager.getColor("Label.disabledForeground"));
-        JPanel header = new JPanel(new BorderLayout(0, 8));
-        header.add(title, BorderLayout.NORTH);
-        header.add(hint, BorderLayout.SOUTH);
-
-        list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        list.setCellRenderer(new ProjectRenderer());
-        list.setFixedCellHeight(72);
-        list.addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting() && listener != null) {
-                listener.onSelectionChanged(list.getSelectedValue());
-            }
-        });
-        list.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mouseClicked(java.awt.event.MouseEvent e) {
-                if (e.getClickCount() == 2 && list.getSelectedValue() != null && listener != null) {
-                    listener.onEdit(list.getSelectedValue());
-                }
-            }
-        });
+        title.setFont(title.getFont().deriveFont(Font.BOLD, 13f));
 
         JButton add = new JButton("追加");
         JButton edit = new JButton("編集");
         JButton remove = new JButton("削除");
+        Icons.apply(add, Icons.plus());
+        Icons.apply(edit, Icons.edit());
+        Icons.apply(remove, Icons.trash());
         add.addActionListener(e -> {
             if (listener != null) {
                 listener.onAdd();
@@ -90,14 +71,37 @@ public class ProjectListPanel extends JPanel {
             }
         });
 
-        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
+        buttons.setOpaque(false);
         buttons.add(add);
         buttons.add(edit);
         buttons.add(remove);
 
+        JPanel header = new JPanel(new BorderLayout(0, 4));
+        header.setOpaque(false);
+        header.add(title, BorderLayout.NORTH);
+        header.add(buttons, BorderLayout.SOUTH);
+
+        list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        list.setCellRenderer(new ProjectRenderer());
+        list.setFixedCellHeight(52);
+        list.setToolTipText("ダブルクリックで編集。選択中のプロジェクトがデプロイ対象です。");
+        list.addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting() && listener != null) {
+                listener.onSelectionChanged(list.getSelectedValue());
+            }
+        });
+        list.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                if (e.getClickCount() == 2 && list.getSelectedValue() != null && listener != null) {
+                    listener.onEdit(list.getSelectedValue());
+                }
+            }
+        });
+
         add(header, BorderLayout.NORTH);
         add(new JScrollPane(list), BorderLayout.CENTER);
-        add(buttons, BorderLayout.SOUTH);
     }
 
     public void setListener(Listener listener) {
@@ -145,11 +149,11 @@ public class ProjectListPanel extends JPanel {
             boolean deployed = project.getId().equals(lastDeployedId);
             String badge = isSelected ? "デプロイ対象" : (deployed ? "前回デプロイ" : "");
             label.setText("<html><b>" + escape(project.getName()) + "</b><br/>"
-                    + "<span style='font-size:10px'>" + escape(shortPath(project)) + "</span>"
-                    + (badge.isEmpty() ? "" : "<br/><span style='font-size:10px'>" + badge + "</span>")
-                    + "</html>");
+                    + "<span style='font-size:10px'>" + escape(shortPath(project))
+                    + (badge.isEmpty() ? "" : " · " + badge)
+                    + "</span></html>");
             label.setVerticalAlignment(SwingConstants.CENTER);
-            label.setBorder(BorderFactory.createEmptyBorder(8, 10, 8, 10));
+            label.setBorder(BorderFactory.createEmptyBorder(4, 8, 4, 8));
             if (!isSelected) {
                 label.setBackground(index % 2 == 0
                         ? UIManager.getColor("List.background")

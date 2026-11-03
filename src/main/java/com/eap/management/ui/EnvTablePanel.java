@@ -20,8 +20,8 @@ public class EnvTablePanel extends JPanel {
     };
 
     public EnvTablePanel() {
-        super(new BorderLayout(8, 8));
-        table.setRowHeight(28);
+        super(new BorderLayout(4, 4));
+        table.setRowHeight(26);
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         table.getColumnModel().getColumn(0).setMaxWidth(60);
         table.getColumnModel().getColumn(1).setPreferredWidth(180);
@@ -30,6 +30,8 @@ public class EnvTablePanel extends JPanel {
 
         JButton add = new JButton("追加");
         JButton remove = new JButton("削除");
+        Icons.apply(add, Icons.plus());
+        Icons.apply(remove, Icons.trash());
         add.addActionListener(e -> {
             model.addRow();
             onChange.run();
@@ -42,12 +44,13 @@ public class EnvTablePanel extends JPanel {
             }
         });
 
-        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
         buttons.add(add);
         buttons.add(remove);
 
         add(buttons, BorderLayout.NORTH);
         add(new JScrollPane(table), BorderLayout.CENTER);
+        setBorder(javax.swing.BorderFactory.createEmptyBorder(4, 4, 4, 4));
     }
 
     public void setVars(List<EnvVar> vars) {
